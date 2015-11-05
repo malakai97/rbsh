@@ -41,3 +41,4 @@ end
 #This works
 eval("@x = 5")
 puts @x
+'var1=7 @var2="something else" cat /etc/hosts | wc -l > file_size 2> ~/errors'
