@@ -1,0 +1,7 @@
+a = 1 b= 2 c=3
+x=7 @y="apple" cat -b -vET /etc/hosts | wc -l > ~/num_servers
+cat -b -vET /etc/hosts | wc -l > ~/num_servers
+5.times {|i| ssh "db-#{i}" mysqld restart}
+5.times {|i| a = 1 b= 2 c=3}
+{x=7 @y="apple" cat -b -vET /etc/hosts | wc -l > ~/num_servers}
+5.times {|i| a=i}
