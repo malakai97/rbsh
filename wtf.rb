@@ -1,5 +1,6 @@
-scope = binding
-puts eval("a=1", scope)
-puts eval("a", scope)
-puts eval("def a; 3; end", scope)
-puts eval("a", scope)
+def method_missing(method, *args, &block)
+  puts "#{method} #{args}"
+  super
+end
+
+eval("git checkout -c --no-ff origin -- herpderp")
