@@ -1,0 +1,29 @@
+
+First off, don't mess with the lexer.
+We should be able to get ruby to just do what we want,
+instead of manipulating strings.
+
+1. define the built-in commands as methods
+This way they'll just get called when we eval the string.
+We may have some difficulty in getting them to correctly
+understand the arguments.  Are we just passing the rest of the line
+as an argument?
+
+2. Define method_missing.  Assuming the arguments won't "just work",
+we have the first method_missing call search for a system command.
+If it finds one, it returns a Command object.  From there, we can
+use that class's method missing to append arguments and whatnot.
+
+3. Define the | operator on main:Object.
+
+4. Do the same for <. >.
+
+For the redirection to work, we have wrap all of this in an object
+so that we can execute the object (or object tree) AFTER assembling
+the various pipes.
+
+While a command executable can just be a file path, subsequent file
+paths can't be commands without an intervening control operator.
+As such, we can handle those with command#method_missing.
+
+And we don't have to mess with the lexer! We can just let ruby do it!
