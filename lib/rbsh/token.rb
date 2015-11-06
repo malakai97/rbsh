@@ -13,7 +13,9 @@ module RBSH
     def quoted?; false; end
 
     def to_s
-      "#{self.class.to_s}(#{contents.inspect})"
+      class_name = self.class.to_s
+      padding = Array.new( 18 - (class_name.length), "-").join("")
+      "#{class_name}#{padding}(#{contents.inspect})"
     end
 
     def inspect

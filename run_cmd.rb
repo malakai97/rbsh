@@ -10,8 +10,13 @@ def main
 
   puts "#### #{code} ####"
 
+  puts "--------------------------------------------------------------"
   parser = RBSH::Parser.new
   quoted = parser.tokenize_strings(code)
+  pp quoted
+
+  puts "--------------------------------------------------------------"
+  bracketed = parser.tokenize_brackets(quoted)
   pp quoted
 
 
