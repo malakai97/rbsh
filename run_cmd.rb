@@ -1,15 +1,21 @@
-line_number = ARGV[0].to_i 
-
-require "irb"
+require "bundler/setup"
+Bundler.require
+require_relative "./lib/rbsh"
 require "pp"
 
+def main
+  line_number = ARGV[0].to_i - 1
+  code = File.read("commands").split("\n")[line_number]
+  code = code.rstrip
 
-code = File.read("commands").split("\n")[line_number]
-puts "#### #{code} ####"
+  puts "#### #{code} ####"
 
-puts "---------------------irb.rubylex.lex-----------------------------"
-pp RubyLex.new.lex(code.strip)
+  parser = RBSH::Parser.new
+  quoted = parser.tokenize_strings(code)
+  pp quoted
 
 
-puts "---------------------irb.slex.lex-----------------------------"
-pp IRB::SLex.new.lex(code.strip)
+end
+
+
+main()

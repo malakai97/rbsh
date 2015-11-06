@@ -1,2 +1,4 @@
-source "https://rubygems.org"
-gem "parser"
+source 'https://rubygems.org'
+
+# Specify your gem's dependencies in rbsh.gemspec
+gemspec
