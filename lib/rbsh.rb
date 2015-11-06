@@ -1,5 +1,6 @@
-require "rbsh/version"
+require "rbsh/parser"
+require "rbsh/token"
 
-module Rbsh
-  # Your code goes here...
+module RBSH
+
 end

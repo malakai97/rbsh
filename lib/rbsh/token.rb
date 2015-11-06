@@ -3,15 +3,21 @@ module RBSH
   class Token
 
     attr_reader :contents
-    attr_reader :bracketed?
-    attr_reader :quoted?
+
 
     def initialize(contents)
       @contents = contents
     end
 
+    def bracketed?; false; end
+    def quoted?; false; end
+
     def to_s
-      "#{self.class}(#{contents.to_s})"
+      "#{self.class.to_s}(#{contents.inspect})"
+    end
+
+    def inspect
+      to_s
     end
   end
 
