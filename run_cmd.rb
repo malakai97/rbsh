@@ -17,7 +17,7 @@ def main
 
   puts "--------------------------------------------------------------"
   bracketed = parser.tokenize_brackets(quoted)
-  pp quoted
+  pp bracketed
 
 
 end

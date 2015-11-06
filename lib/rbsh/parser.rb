@@ -32,7 +32,10 @@ module RBSH
     def tokenize_brackets(all_tokens)
       tokens = []
       all_tokens.each do |token|
-        next if token.quoted?
+        if token.quoted? || token.contents.empty?
+          tokens << token
+          next
+        end
         token.contents.split(/(#?\{.*\})/).each do |string_sub_token|
           if string_sub_token.end_with?("}")
             tokens << BracketToken.new(string_sub_token)
