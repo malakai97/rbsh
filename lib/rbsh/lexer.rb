@@ -24,13 +24,12 @@ module RBSH
     rule(/\|/, :default)      { :PIPE }
     rule(/\{/, :default)      { push_state(:curly_brace); :CURLY_BRACE_START }
     rule(/\[/, :default)      { push_state(:bracket); :BRACKET_START }
-
+    rule(/=/, :default)       { :EQUALS }
 
     rule(/\]/, :bracket)      { pop_state; :BRACKET_END}
     rule(/"/, :bracket)       { push_state(:double_quote); :DOUBLE_QUOTE_START }
     rule(/'/, :bracket)       { push_state(:single_quote); :SINGLE_QUOTE_START }
     rule(/`/, :bracket)       { push_state(:subshell); :SUBSHELL_START }
-
 
     rule(/\}/, :curly_brace)  { pop_state; :CURLY_BRACE_END }
     rule(/"/, :curly_brace)   { push_state(:double_quote); :DOUBLE_QUOTE_START }
