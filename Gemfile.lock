@@ -2,17 +2,31 @@ PATH
   remote: .
   specs:
     rbsh (0.1.0)
+      rltk
 
 GEM
   remote: https://rubygems.org/
   specs:
+    coderay (1.1.1)
+    ffi (1.9.14)
+    filigree (0.3.3)
+    method_source (0.8.2)
+    pry (0.10.4)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    rltk (3.0.1)
+      ffi (>= 1.0.0)
+      filigree (>= 0.2.0)
+    slop (3.6.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   bundler (~> 1.10)
+  pry
   rbsh!
 
 BUNDLED WITH
-   1.10.6
+   1.12.5
