@@ -3,12 +3,6 @@ require "rltk"
 
 module RBSH
 
-  class NewLexer
-
-
-
-  end
-
   class Lexer < RLTK::Lexer
 
     # /=/ denotes assignment, should be passed to ruby
@@ -72,11 +66,3 @@ module RBSH
 
 end
 
-File.readlines("/home/bhock/code/rbsh/some_commands").each do |line|
-  line = line.strip
-  puts "######## #{line} ########"
-  result =  RBSH::Lexer.new.lex(line)
-  puts result
-end
-
-# require 'pry'; binding.pry
