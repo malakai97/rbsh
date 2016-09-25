@@ -25,7 +25,7 @@ module RBSH
     rule(/\\/, :single_quote) { push_state(:escape); :BACKSLASH }
     rule(/'/, :single_quote)  { pop_state; :SINGLE_QUOTE_END }
 
-    rule(/\\/, :double_quote) { push_state(:escape); :BACKSLASH }
+    rule(/\\/, :double_quote) { push_state(:escape) }
     rule(/"/, :double_quote)  { pop_state; :DOUBLE_QUOTE_END }
     rule(/[^\\]#\{/, :double_quote) { push_state(:interpolate); :INTERPOLATE_START }
 
