@@ -11,3 +11,9 @@ x = y( 7 )
 git checkout -c --no-ff origin -- herpderp
 cat -b -vET readme.md
 a="apple", b="1,2,3" puts "zipzip" && puts "#{"som#{"blarg"}e_string"}"
+5.times { 4.times { puts "this" } }
+[[1,2,3],[4,5,"six"]]
+x = `cat #{`ls -1`}`
+5.times { [[1,2,3], {a: [4,5,6], b: "seven []"}]}
+y = "#{"interpolation }}}"}"
+z = `echo #{`echo bracket(})`}`
