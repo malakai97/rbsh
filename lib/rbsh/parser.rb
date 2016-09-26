@@ -1,113 +1,115 @@
 
-require "rbsh/token"
 
 module RBSH
   class Parser
-    ORDER = [
-      :tokenize_strings,
-      :tokenize_brackets
-    ]
 
-    # Look for pairs of quotes and convert their
-    # contents to a single token.
-    # @param string [String]
-    # @return [Array<Token, QuoteToken>]
-    def tokenize_strings(string)
-      tokens = []
-      all_tokens = split_on(string, '"')
-      all_tokens.each_index do |i|
-        if (i+1) % 2 == 0
-          tokens << QuoteToken.new(all_tokens[i])
-        else
-          tokens << RBSH::Token.new(all_tokens[i])
-        end
-      end
-      return tokens
-    end
 
-    # Look for the outermost pair of brackets
-    # and convert their contents to a single token.
-    # @param all_tokens [Array<Token,QuoteToken>]
-    # @return [Array<Token,QuoteToken,BracketToken>]
-    def tokenize_brackets(all_tokens)
-      tokens = []
-      all_tokens.each do |token|
-        if token.quoted? || token.contents.empty?
-          tokens << token
-          next
-        end
-        token.contents.split(/(#?\{.*\})/).each do |string_sub_token|
-          if string_sub_token.end_with?("}")
-            tokens << BracketToken.new(string_sub_token)
-          else
-            tokens << RBSH::Token.new(string_sub_token)
-          end
-        end
-      end
 
-      return tokens
+    # Mostly we are just identifying things.  We will let ruby handle them.
+    # Ruby handles:
+    #  - anything in a double quoted string, including interpolation subshells, etc
+    #  - anything in a single quoted string
+    #  - anything in a curly brace
+    #  - anything in brackets
+    #  - anything in a backticks, again we're just doing this work to find its end.
+
+    def initialize(tokens)
+      @tokens = tokens
+      @index = 0
+      @active = nil
+      @output = []
     end
 
 
-    def split_on(string, char)
-      char_indexes = []
-      bracket_balance = 0
-
-      for i in (0..string.length-1) do
-        case string[i]
-          when "{"
-            bracket_balance += 1
-          when "}"
-            bracket_balance -= 1
-          when char
-            if bracket_balance == 0
-              char_indexes << i
-            end
-        end
-      end
-
-      stanzas = [string.slice(0, (char_indexes[0] || string.length)).strip]
-      char_indexes.each_index do |i|
-        start = char_indexes[i] + 1
-        stop = (char_indexes[i+1] || string.length) - start
-        stanzas << string.slice(start, stop).strip
-      end
-
-      return stanzas
-    end
-
-
-
-
-
-    def blah_when_open(string)
-      for i in (0..string.length-1) do
-
+    # parse the next token
+    def parse_next(tokens)
+      case tokens.first.type
+      when :SINGLE_QUOTE_START
+        parse_single_quote("", tokens)
+      when :DOUBLE_QUOTE_START
+        parse_double_quote("", tokens)
+      when :SUBSHELL_START
+        parse_subshell("", tokens)
+      when :CURLY_BRACE_START
+        parse_curly_brace("", tokens)
+      when :BRACKET_START
+        parse_bracket("", tokens)
+      when :CHAR
+        parse_word("", tokens)
+      when :WHITESPACE
+        parse(tokens[1..-1])
       end
 
     end
 
-    def blah(string, is_open)
-      tokens = []
-      current_token = ""
-      for i in (0..string.length-1)
-        if string[i] == '"'
-          if is_open
-            is_open = false
-            tokens << current_token
-            current_token = ""
-          else
-            is_open = true
-            tokens << current_token unless current_token.empty?
-            current_token = ""
-          end
-        else
-          current_token << string[i]
-        end
+    # Parse a word
+    # @param active The active token
+    # @param tokens The array of tokens with which to construct
+    #   the word.  Should not include used tokens.
+    # @return [word, tokens] The word and the yet-unused tokens.
+    def parse_word(active, tokens)
+      return active, tokens if tokens.empty?
+      if tokens.first.type == :CHAR
+        parse_word(active + tokens.first.value, tokens[1..-1])
+      else
+        [active, tokens]
       end
-
-      return tokens
     end
+
+
+    # Anything in single quotes is part of that string
+    def parse_single_quote(active, tokens)
+      loop do
+        break if tokens.empty?
+        active << tokens.first.value
+        type = tokens.first.type
+        tokens = tokens[1..-1]
+        break if type == :SINGLE_QUOTE_END
+      end
+      return active, tokens
+    end
+
+    def parse_subshell(active, tokens)
+      parse_nestable active, tokens, :SUBSHELL_START, :SUBSHELL_END
+    end
+
+    # Parse a double-quoted string
+    # the first token should be the :DOUBLE_QUOTE_START
+    def parse_double_quote(active, tokens)
+      parse_nestable active, tokens, :DOUBLE_QUOTE_START, :DOUBLE_QUOTE_END
+    end
+
+    # Anything in a curly brace is ruby code
+    def parse_curly_brace(active, tokens)
+      parse_nestable active, tokens, :CURLY_BRACE_START, :CURLY_BRACE_END
+    end
+
+    # Anything in a bracket is ruby code
+    def parse_bracket(active, tokens)
+      parse_nestable active, tokens, :BRACKET_START, :BRACKET_END
+    end
+
+
+    def parse_nestable(active, tokens, start_type, stop_type)
+      nesting = 0
+      loop do
+        break if tokens.empty?
+        case tokens.first.type
+        when start_type
+          nesting += 1
+        when stop_type
+          nesting -= 1
+        end
+        active << tokens.first.value
+        tokens = tokens[1..-1]
+        break if nesting == 0
+      end
+      return active, tokens
+    end
+
+
+
+
 
     private
 
