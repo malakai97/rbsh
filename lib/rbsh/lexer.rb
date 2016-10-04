@@ -3,13 +3,8 @@ require "rltk"
 
 module RBSH
 
+  # Tokenizes a string from the command line.
   class Lexer < RLTK::Lexer
-
-    # /=/ denotes assignment, should be passed to ruby
-    #     but we have to support assignments separated by spaces
-    # rule(/=/) { :EQUALS }
-
-    # /[a-zA-Z_][a-zA-Z0-9_]*/ denotes a variable name
 
     rule(/\\/, :default)      { push_state(:escape) }
     rule(/`/, :default)       { push_state(:subshell); [:SUBSHELL_START, '`'] }
@@ -19,6 +14,8 @@ module RBSH
     rule(/\{/, :default)      { push_state(:curly_brace); [:CURLY_BRACE_START, "{"] }
     rule(/\[/, :default)      { push_state(:bracket); [:BRACKET_START, "["] }
     rule(/=/, :default)       { [:EQUALS, '='] }
+    rule(/&&/, :default)      { [:AND, '&&']}
+    rule(/\|\|/, :default)    { [:OR, '||']}
 
     rule(/\[/, :bracket)      { push_state(:bracket); [:BRACKET_START, "["] }
     rule(/\]/, :bracket)      { pop_state; [:BRACKET_END, "]" ]}
@@ -45,15 +42,25 @@ module RBSH
     rule(/"/, :interpolate)   { push_state(:double_quote); [:DOUBLE_QUOTE_START, '"'] }
     rule(/'/, :interpolate)   { push_state(:single_quote); [:SINGLE_QUOTE_START, "'"] }
     rule(/\}/, :interpolate)  { pop_state; [:INTERPOLATE_END, '}'] }
+    rule(/\{/, :interpolate)  { push_state(:curly_brace); [:CURLY_BRACE_START, "{"] }
+    rule(/\[/, :interpolate)  { push_state(:bracket); [:BRACKET_START, "["] }
 
     rule(/.|\s/, :escape)     {|c| pop_state; [:ESCAPED, '\\' + c] }
 
     rule(/\\/, :subshell)     { push_state(:escape) }
     rule(/`/, :subshell)      { pop_state; [:SUBSHELL_END, '`'] }
     rule(/#\{/, :subshell)    { push_state(:interpolate); [:INTERPOLATE_START, '#{'] }
-    rule(/"/, :subshell)      {|c| push_state(:double_quote); [:ANY, c] }
-    rule(/'/, :subshell)      {|c| push_state(:single_quote); [:ANY, c] }
+    rule(/"/, :subshell)      {|c| push_state(:double_quote); [:DOUBLE_QUOTE_START, c] }
+    rule(/'/, :subshell)      {|c| push_state(:single_quote); [:SINGLE_QUOTE_START, c] }
 
+
+    rule(/[^\s\\'"`\[{]+/,  :default)       {|c| [:WORD, c] }
+    rule(/[^\s'"`\]{]+/,    :bracket)       {|c| [:WORD, c] }
+    rule(/[^\s'"`\[{}]+/,   :curly_brace)   {|c| [:WORD, c] }
+    rule(/[^\s\\]+/,        :single_quote)  {|c| [:WORD, c] }
+    rule(/[^\s\\"#]+/,      :double_quote)  {|c| [:WORD, c] }
+    rule(/[^\s'"`\[\]{}]+/, :interpolate)   {|c| [:WORD, c] }
+    rule(/[^\s\\'"`#]+/,    :subshell)      {|c| [:WORD, c] }
 
     [
       :default,
@@ -64,8 +71,7 @@ module RBSH
       :curly_brace,
       :bracket
     ].each do |state|
-      rule(/[^\s]/, state)    {|c| [:CHAR, c] }
-      rule(/\s/, state)       {|c| [:WHITESPACE, c] }
+      rule(/\s+/, state)       {|c| [:WHITESPACE, c] }
     end
   end
 
