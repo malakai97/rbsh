@@ -3,7 +3,7 @@ a = 1, b= 2, c=3
 x=7 @y="apple" cat -b -vET /etc/hosts | wc -l > ~/num_servers
 cat -b -vET /etc/hosts | wc -l > ~/num_servers
 cat -b -vET /etc/hosts | wc -l -L > ~/num_servers
-5.times {|i| ssh "db-#{i}" mysqld restart}
+5.times {|i| `ssh "db-#{i}" mysqld restart` }
 5.times {|i| a = 1 b= 2 c=3}
 {x=7 @y="apple" cat -b -vET /etc/hosts | wc -l > ~/num_servers}
 5.times {|i| a=i}
@@ -17,3 +17,6 @@ x = `cat #{`ls -1`}`
 5.times { [[1,2,3], {a: [4,5,6], b: "seven []"}]}
 y = "#{"interpolation }}}"}"
 z = `echo #{`echo bracket(})`}`
+5.times {|i| `ssh "db-#{i}" cat /etc/hosts`} | cowsay
+cat                                 somefile.txt
+ssh "zip=#{{a: ["recruiter"]}}"
