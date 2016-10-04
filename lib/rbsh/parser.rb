@@ -1,23 +1,31 @@
 
 
 module RBSH
+
+  # Takes an array of tokens from the lexer and parses
+  # them into logical units.  These units can then be
+  # resolved to semantic objects within a pipeline.
   class Parser
 
-
-
-    # Mostly we are just identifying things.  We will let ruby handle them.
-    # Ruby handles:
-    #  - anything in a double quoted string, including interpolation subshells, etc
-    #  - anything in a single quoted string
-    #  - anything in a curly brace
-    #  - anything in brackets
-    #  - anything in a backticks, again we're just doing this work to find its end.
-
-    def initialize(tokens)
-      @tokens = tokens
-      @index = 0
-      @active = nil
-      @output = []
+    # Given an array of tokens, produce
+    # an array of arrays of logical units with
+    # all nesting resolved.
+    def parse(tokens)
+      current_pipe = []
+      pipeline = []
+      until tokens.empty?
+        if tokens.first.type == :PIPE
+          pipeline << current_pipe
+          current_pipe = []
+          tokens = tokens.drop(1)
+        else
+          subclause, new_tokens = parse_next(tokens)
+          tokens = new_tokens
+          current_pipe << subclause
+        end
+      end
+      pipeline << current_pipe
+      return pipeline
     end
 
 
@@ -34,12 +42,27 @@ module RBSH
         parse_curly_brace("", tokens)
       when :BRACKET_START
         parse_bracket("", tokens)
-      when :CHAR
+      when :WORD
         parse_word("", tokens)
       when :WHITESPACE
-        parse(tokens[1..-1])
+        parse_whitespace("", tokens)
+      when :EQUALS
+        ["=", tokens.drop(1)]
+      when :EOS #the end of stream character
+        ["", []]
       end
 
+    end
+
+    # Parse consecutive whitespace.
+    def parse_whitespace(active, tokens)
+      return active, tokens if tokens.empty?
+      if tokens.first.type == :WHITESPACE
+        active << tokens.first.value
+        parse_whitespace active, tokens.drop(1)
+      else
+        [active, tokens]
+      end
     end
 
     # Parse a word
@@ -48,12 +71,7 @@ module RBSH
     #   the word.  Should not include used tokens.
     # @return [word, tokens] The word and the yet-unused tokens.
     def parse_word(active, tokens)
-      return active, tokens if tokens.empty?
-      if tokens.first.type == :CHAR
-        parse_word(active + tokens.first.value, tokens[1..-1])
-      else
-        [active, tokens]
-      end
+      [tokens.first.value, tokens.drop(1)]
     end
 
 
@@ -63,7 +81,7 @@ module RBSH
         break if tokens.empty?
         active << tokens.first.value
         type = tokens.first.type
-        tokens = tokens[1..-1]
+        tokens = tokens.drop(1)
         break if type == :SINGLE_QUOTE_END
       end
       return active, tokens
@@ -101,7 +119,7 @@ module RBSH
           nesting -= 1
         end
         active << tokens.first.value
-        tokens = tokens[1..-1]
+        tokens = tokens.drop(1)
         break if nesting == 0
       end
       return active, tokens

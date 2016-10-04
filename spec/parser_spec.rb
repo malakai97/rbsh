@@ -8,15 +8,11 @@ end
 
 module RBSH
   describe Parser do
-    let(:parser) { described_class.new([]) }
+    let(:parser) { described_class.new }
     describe "#parse_word" do
       let(:string) { 'f-!' }
       let(:tokens) {
-        [
-          Token.new(:CHAR, 'f'),
-          Token.new(:CHAR, '-'),
-          Token.new(:CHAR, '!')
-        ]
+        [Token.new(:WORD, 'f-!')]
       }
       it "handles tokens" do
         expect(parser.parse_word("", tokens)[0]).to eql(string)
