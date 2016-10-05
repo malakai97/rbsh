@@ -42,3 +42,6 @@ pickle-email-*.html
 # Yard Documentation
 .yardoc
 doc/
+
+# Parser definition
+parser.tbl
