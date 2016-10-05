@@ -1,5 +1,4 @@
-require "bundler/setup"
-require "rltk"
+
 
 module RBSH
 
@@ -54,7 +53,7 @@ module RBSH
     rule(/'/, :subshell)      {|c| push_state(:single_quote); [:SINGLE_QUOTE_START, c] }
 
 
-    rule(/[^\s\\'"`\[{]+/,  :default)       {|c| [:WORD, c] }
+    rule(/[^\s=\\'"`\[{]+/, :default)       {|c| [:WORD, c] }
     rule(/[^\s'"`\]{]+/,    :bracket)       {|c| [:WORD, c] }
     rule(/[^\s'"`\[{}]+/,   :curly_brace)   {|c| [:WORD, c] }
     rule(/[^\s\\]+/,        :single_quote)  {|c| [:WORD, c] }
@@ -62,17 +61,13 @@ module RBSH
     rule(/[^\s'"`\[\]{}]+/, :interpolate)   {|c| [:WORD, c] }
     rule(/[^\s\\'"`#]+/,    :subshell)      {|c| [:WORD, c] }
 
-    [
-      :default,
-      :subshell,
-      :interpolate,
-      :double_quote,
-      :single_quote,
-      :curly_brace,
-      :bracket
-    ].each do |state|
-      rule(/\s+/, state)       {|c| [:WHITESPACE, c] }
-    end
+    rule(/\s+/, :default)                   { nil }
+    rule(/\s+/, :bracket)                   {|c| [:WHITESPACE, c] }
+    rule(/\s+/, :curly_brace)               {|c| [:WHITESPACE, c] }
+    rule(/\s+/, :single_quote)              {|c| [:WHITESPACE, c] }
+    rule(/\s+/, :double_quote)              {|c| [:WHITESPACE, c] }
+    rule(/\s+/, :interpolate)               {|c| [:WHITESPACE, c] }
+    rule(/\s+/, :subshell)                  {|c| [:WHITESPACE, c] }
   end
 
 end
