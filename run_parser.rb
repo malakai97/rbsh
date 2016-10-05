@@ -11,16 +11,18 @@ def main
       line = line.rstrip
       puts "######## #{line_number}: #{line} ########"
       result =  RBSH::Lexer.new.lex(line)
-      pp RBSH::Parser.new.parse(result)
+      ast = RBSH::Parser::parse(result, parse_tree: true)
     end
   else
     line_number = ARGV[0].to_i - 1
     line = File.read("commands").split("\n")[line_number]
     line = line.rstrip
     puts "######## #{line_number}: #{line} ########"
-    result =RBSH::Parser.new.parse(RBSH::Lexer.new.lex(line))
-    pp result
-    require 'pry'; binding.pry
+    lexed = RBSH::Lexer.new.lex(line)
+    ast = RBSH::Parser::parse(lexed)
+    # pp ast
+    # require 'pry'; binding.pry
+    puts ast.to_sexp
   end
 end
 

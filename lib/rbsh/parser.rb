@@ -2,149 +2,153 @@
 
 module RBSH
 
-  # Takes an array of tokens from the lexer and parses
-  # them into logical units.  These units can then be
-  # resolved to semantic objects within a pipeline.
-  class Parser
+  class Parser < RLTK::Parser
 
-    # Given an array of tokens, produce
-    # an array of arrays of logical units with
-    # all nesting resolved.
-    def parse(tokens)
-      current_pipe = []
-      pipeline = []
-      until tokens.empty?
-        if tokens.first.type == :PIPE
-          pipeline << current_pipe
-          current_pipe = []
-          tokens = tokens.drop(1)
-        else
-          subclause, new_tokens = parse_next(tokens)
-          tokens = new_tokens
-          current_pipe << subclause
-        end
-      end
-      pipeline << current_pipe
-      return pipeline
+    # :input is not special; the first clause is
+    # automatically the input clause.
+    production(:input) do
+      clause('pipeline') {|e| e}
     end
 
 
-    # parse the next token
-    def parse_next(tokens)
-      case tokens.first.type
-      when :SINGLE_QUOTE_START
-        parse_single_quote("", tokens)
-      when :DOUBLE_QUOTE_START
-        parse_double_quote("", tokens)
-      when :SUBSHELL_START
-        parse_subshell("", tokens)
-      when :CURLY_BRACE_START
-        parse_curly_brace("", tokens)
-      when :BRACKET_START
-        parse_bracket("", tokens)
-      when :WORD
-        parse_word("", tokens)
-      when :WHITESPACE
-        parse_whitespace("", tokens)
-      when :EQUALS
-        ["=", tokens.drop(1)]
-      when :EOS #the end of stream character
-        ["", []]
-      end
+    production(:word, 'WORD')             {|w| AST::Word.new(w) }
+    production(:escaped, 'ESCAPED')       {|e| AST::Escaped.new(e) }
+    production(:whitespace, 'WHITESPACE') {|s| AST::Whitespace.new(s) }
+    production(:equals, 'EQUALS')         {|_| AST::Equals.new }
+    production(:and, 'AND')               {|_| AST::And.new }
+    production(:or, 'OR')                 {|_| AST::Or.new }
 
+
+
+    production(:pipeline) do
+      clause('pipeline_element_list') {|list| AST::Pipeline.new(list)}
     end
-
-    # Parse consecutive whitespace.
-    def parse_whitespace(active, tokens)
-      return active, tokens if tokens.empty?
-      if tokens.first.type == :WHITESPACE
-        active << tokens.first.value
-        parse_whitespace active, tokens.drop(1)
-      else
-        [active, tokens]
-      end
+    production(:pipeline_element_list) do
+      clause('') {|| []}
+      clause('pipeline_element') {|e| [e]}
+      clause('pipeline_element_list PIPE pipeline_element') {|list,_,e| list + [e]}
     end
-
-    # Parse a word
-    # @param active The active token
-    # @param tokens The array of tokens with which to construct
-    #   the word.  Should not include used tokens.
-    # @return [word, tokens] The word and the yet-unused tokens.
-    def parse_word(active, tokens)
-      [tokens.first.value, tokens.drop(1)]
+    production(:pipeline_element) do
+      clause('nonempty_expression_list') {|list| AST::PipelineElement.new(list) }
     end
 
 
-    # Anything in single quotes is part of that string
-    def parse_single_quote(active, tokens)
-      loop do
-        break if tokens.empty?
-        active << tokens.first.value
-        type = tokens.first.type
-        tokens = tokens.drop(1)
-        break if type == :SINGLE_QUOTE_END
-      end
-      return active, tokens
+    production(:nonempty_expression_list) do
+      clause('expression') {|e| [e]}
+      clause('nonempty_expression_list expression') {|list,e| list + [e]}
     end
 
-    def parse_subshell(active, tokens)
-      parse_nestable active, tokens, :SUBSHELL_START, :SUBSHELL_END
+    production(:empty_expression_list) do
+      clause('') { || [] }
+      clause('nonempty_expression_list') {|list| list}
     end
 
-    # Parse a double-quoted string
-    # the first token should be the :DOUBLE_QUOTE_START
-    def parse_double_quote(active, tokens)
-      parse_nestable active, tokens, :DOUBLE_QUOTE_START, :DOUBLE_QUOTE_END
+    production(:expression) do
+      clause('special_expression')    {|s| s}
+      clause('nonspecial_expression') {|s| s}
     end
 
-    # Anything in a curly brace is ruby code
-    def parse_curly_brace(active, tokens)
-      parse_nestable active, tokens, :CURLY_BRACE_START, :CURLY_BRACE_END
+    production(:nonspecial_expression) do
+      clause('word')                  {|s| s}
+      clause('escaped')               {|s| s}
+      clause('whitespace')            {|s| s}
+      clause('equals')                {|s| s}
+      clause('and')                   {|s| s}
+      clause('or')                    {|s| s}
     end
 
-    # Anything in a bracket is ruby code
-    def parse_bracket(active, tokens)
-      parse_nestable active, tokens, :BRACKET_START, :BRACKET_END
-    end
-
-
-    def parse_nestable(active, tokens, start_type, stop_type)
-      nesting = 0
-      loop do
-        break if tokens.empty?
-        case tokens.first.type
-        when start_type
-          nesting += 1
-        when stop_type
-          nesting -= 1
-        end
-        active << tokens.first.value
-        tokens = tokens.drop(1)
-        break if nesting == 0
-      end
-      return active, tokens
+    production(:special_expression) do
+      clause('subshell')              {|s| s}
+      clause('double_quoted_string')  {|s| s}
+      clause('single_quoted_string')  {|s| s}
+      clause('curly_braced')          {|s| s}
+      clause('bracketed')             {|s| s}
     end
 
 
-
-
-
-    private
-
-    # Cross-platform way of finding an executable in the $PATH.
-    # Stolen from http://mislav.net/ via stackoverflow
-    #
-    #   which('ruby') #=> /usr/bin/ruby
-    def which(cmd)
-      exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
-      ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-        exts.each { |ext|
-          exe = File.join(path, "#{cmd}#{ext}")
-          return exe if File.executable?(exe) && !File.directory?(exe)
-        }
-      end
-      return nil
+    production(:subshell) do
+      clause('SUBSHELL_START subshell_content SUBSHELL_END') {|_,list,_| AST::Subshell.new(list) }
+    end
+    production(:subshell_content) do
+      clause('') { || [] }
+      clause('subshell_element') {|e| [e]}
+      clause('subshell_content subshell_element') { |list, e| list + [e] }
+    end
+    production(:subshell_element) do
+      clause('expression')            {|s| s}
+      clause('interpolation')         {|s| s}
     end
 
+
+    production(:interpolation) do
+      clause('INTERPOLATE_START interpolation_content INTERPOLATE_END') {|_,list,_| AST::Interpolation.new(list)}
+    end
+    production(:interpolation_content) do
+      clause('empty_expression_list') {|list| list}
+    end
+
+
+    production(:single_quoted_string) do
+      clause('SINGLE_QUOTE_START single_quote_content SINGLE_QUOTE_END') {|_,list,_| AST::SingleQuote.new(list)}
+    end
+    production(:single_quote_content) do
+      clause('') {|| [] }
+      clause('single_quote_element') {|e| [e]}
+      clause('single_quote_content single_quote_element') {|list,e| list + [e]}
+    end
+    production(:single_quote_element) do
+      clause('word')                {|s| s}
+      clause('whitespace')          {|s| s}
+      clause('escaped')              {|s| s}
+    end
+
+
+    production(:double_quoted_string) do
+      clause('DOUBLE_QUOTE_START double_quote_content DOUBLE_QUOTE_END') {|_,list,_| AST::DoubleQuote.new(list)}
+    end
+    production(:double_quote_content) do
+      clause('') {|| [] }
+      clause('double_quote_element') {|e| [e]}
+      clause('double_quote_content double_quote_element') {|list,e| list + [e]}
+    end
+    production(:double_quote_element) do
+      clause('word')                {|s| s}
+      clause('whitespace')          {|s| s}
+      clause('escaped')              {|s| s}
+      clause('interpolation')       {|s| s}
+    end
+
+
+    production(:curly_braced) do
+      clause('CURLY_BRACE_START curly_brace_content CURLY_BRACE_END') {|_,list,_| AST::CurlyBraced.new(list)}
+    end
+    production(:curly_brace_content) do
+      clause('') {|| [] }
+      clause('curly_brace_element') {|e| [e]}
+      clause('curly_brace_content curly_brace_element') {|list,e| list + [e]}
+    end
+    production(:curly_brace_element) do
+      clause('word')                {|s| s}
+      clause('whitespace')          {|s| s}
+      clause('special_expression')  {|s| s}
+    end
+
+
+    production(:bracketed) do
+      clause('BRACKET_START bracket_content BRACKET_END') {|_,list,_| AST::Bracketed.new(list)}
+    end
+    production(:bracket_content) do
+      clause('') {|| [] }
+      clause('bracket_element') {|e| [e]}
+      clause('bracket_content bracket_element') {|list,e| list + [e]}
+    end
+    production(:bracket_element) do
+      clause('word')                {|s| s}
+      clause('whitespace')          {|s| s}
+      clause('special_expression')  {|s| s}
+    end
+
+
+    finalize(use: 'parser.tbl')
   end
 end
