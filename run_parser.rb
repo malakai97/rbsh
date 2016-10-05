@@ -9,9 +9,10 @@ def main
     File.readlines("commands").each do |line|
       line_number += 1
       line = line.rstrip
-      puts "######## #{line_number}: #{line} ########"
+      puts "\n######## #{line_number}: #{line} ########"
       result =  RBSH::Lexer.new.lex(line)
-      ast = RBSH::Parser::parse(result, parse_tree: true)
+      ast = RBSH::Parser::parse(result)
+      puts ast.to_sexp
     end
   else
     line_number = ARGV[0].to_i - 1
