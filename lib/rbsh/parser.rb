@@ -89,7 +89,7 @@ module RBSH
 
 
     production(:single_quoted_string) do
-      clause('SINGLE_QUOTE_START single_quote_content SINGLE_QUOTE_END') {|_,list,_| AST::SingleQuote.new(list)}
+      clause('SINGLE_QUOTE_START single_quote_content SINGLE_QUOTE_END') {|_,list,_| AST::SingleQuotedString.new(list)}
     end
     production(:single_quote_content) do
       clause('') {|| [] }
@@ -104,7 +104,7 @@ module RBSH
 
 
     production(:double_quoted_string) do
-      clause('DOUBLE_QUOTE_START double_quote_content DOUBLE_QUOTE_END') {|_,list,_| AST::DoubleQuote.new(list)}
+      clause('DOUBLE_QUOTE_START double_quote_content DOUBLE_QUOTE_END') {|_,list,_| AST::DoubleQuotedString.new(list)}
     end
     production(:double_quote_content) do
       clause('') {|| [] }
@@ -149,6 +149,6 @@ module RBSH
     end
 
 
-    finalize(use: 'parser.tbl')
+    finalize#(use: 'parser.tbl')
   end
 end

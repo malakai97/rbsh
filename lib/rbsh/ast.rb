@@ -58,8 +58,8 @@ module RBSH
 
     class Subshell < Parent; end
     class Interpolation < Parent; end
-    class SingleQuote < Parent; end
-    class DoubleQuote < Parent; end
+    class SingleQuotedString < Parent; end
+    class DoubleQuotedString < Parent; end
     class CurlyBraced < Parent; end
     class Bracketed < Parent; end
 
