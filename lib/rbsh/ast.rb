@@ -10,7 +10,7 @@ module RBSH
       end
 
       def to_sexp(indent=0)
-        indented = " |" * indent
+        indented = "| " * indent
         sexp = "#{indented}(#{fancy_type}"
 
         first_node_child = children.index do |child|
