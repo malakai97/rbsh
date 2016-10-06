@@ -7,9 +7,19 @@ module RBSH
     # :input is not special; the first clause is
     # automatically the input clause.
     production(:input) do
-      clause('pipeline') {|e| e}
+      clause('pipeline_list')  {|e| AST::ClauseList.new(e) }
     end
 
+    production(:pipeline_list) do
+      clause('pipeline') {|e| [e]}
+      clause('pipeline_list pipeline_separator pipeline') {|list,sep,e| list + sep + [e]}
+    end
+
+    production(:pipeline_separator) do
+      clause('and')   {|s| [s]}
+      clause('or')    {|s| [s]}
+      clause('SEMI')  {|_| []}
+    end
 
     production(:escaped, 'ESCAPED')       {|e| AST::Escaped.new(e) }
     production(:whitespace, 'WHITESPACE') {|s| AST::Whitespace.new(s) }
@@ -46,7 +56,7 @@ module RBSH
     production(:word) do
       clause('WORD')        {|w| AST::Word.new(w) }
       clause('COMMA')       {|c| AST::Word.new(c) }
-      clause('SEMI')        {|s| AST::Word.new(s) }
+      # clause('SEMI')        {|s| AST::Word.new(s) }
     end
 
 
@@ -70,8 +80,8 @@ module RBSH
       clause('escaped')               {|s| s}
       clause('whitespace')            {|s| s}
       clause('equals')                {|s| s}
-      clause('and')                   {|s| s}
-      clause('or')                    {|s| s}
+      # clause('and')                   {|s| s}
+      # clause('or')                    {|s| s}
     end
 
     production(:special_expression) do

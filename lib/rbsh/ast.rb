@@ -32,14 +32,21 @@ module RBSH
 
     end
 
+    class ClauseElement < Node; end
+    class And < ClauseElement; end
+    class Or < ClauseElement; end
     class Expression < Node; end
 
     class PipelineElement < Node
       child :children, [Expression]
     end
 
-    class Pipeline < Node
+    class Pipeline < ClauseElement
       child :children, [PipelineElement]
+    end
+
+    class ClauseList < Node
+      child :children, [ClauseElement]
     end
 
 
@@ -68,8 +75,6 @@ module RBSH
     class Whitespace < Terminal; end
 
     class Equals < Expression; end
-    class And < Expression; end
-    class Or < Expression; end
 
     class Assignment < Expression
       child :lhs, Word
