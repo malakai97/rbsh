@@ -3,6 +3,7 @@ require "rltk"
 require "rbsh/lexer"
 require "rbsh/ast"
 require "rbsh/parser"
+require "rbsh/visitor"
 
 
 module RBSH
