@@ -53,7 +53,6 @@ module RBSH
       def fancy_type
         "#{super}[#{value}]"
       end
-
     end
 
     class Subshell < Parent; end
@@ -62,6 +61,7 @@ module RBSH
     class DoubleQuotedString < Parent; end
     class CurlyBraced < Parent; end
     class Bracketed < Parent; end
+    class Parenthetical < Parent; end
 
     class Word < Terminal; end
     class Escaped < Terminal; end
@@ -70,6 +70,13 @@ module RBSH
     class Equals < Expression; end
     class And < Expression; end
     class Or < Expression; end
+
+    class Assignment < Expression
+      child :lhs, Word
+      child :rhs, Expression
+    end
+
+
   end
 
 end

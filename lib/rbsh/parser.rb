@@ -11,13 +11,11 @@ module RBSH
     end
 
 
-    production(:word, 'WORD')             {|w| AST::Word.new(w) }
     production(:escaped, 'ESCAPED')       {|e| AST::Escaped.new(e) }
     production(:whitespace, 'WHITESPACE') {|s| AST::Whitespace.new(s) }
     production(:equals, 'EQUALS')         {|_| AST::Equals.new }
     production(:and, 'AND')               {|_| AST::And.new }
     production(:or, 'OR')                 {|_| AST::Or.new }
-
 
 
     production(:pipeline) do
@@ -29,7 +27,26 @@ module RBSH
       clause('pipeline_element_list PIPE pipeline_element') {|list,_,e| list + [e]}
     end
     production(:pipeline_element) do
-      clause('nonempty_expression_list') {|list| AST::PipelineElement.new(list) }
+      clause('assignment_list empty_expression_list') {|a,e| AST::PipelineElement.new(a+e) }
+    end
+
+    production(:assignment_list) do
+      clause('')                            {|| []}
+      clause('assignment')                  {|a| [a]}
+      clause('assignment_list assignment')  {|list,a| list + [a] }
+      clause('assignment_list COMMA assignment')  {|list,_,a| list + [a] }
+      clause('assignment_list SEMI assignment')   {|list,_,a| list + [a] }
+    end
+
+    production(:assignment) do
+      clause('word equals special_expression') {|lhs,_,rhs| AST::Assignment.new(lhs, rhs) }
+      clause('word equals word')               {|lhs,_,rhs| AST::Assignment.new(lhs, rhs) }
+    end
+
+    production(:word) do
+      clause('WORD')        {|w| AST::Word.new(w) }
+      clause('COMMA')       {|c| AST::Word.new(c) }
+      clause('SEMI')        {|s| AST::Word.new(s) }
     end
 
 
@@ -63,6 +80,12 @@ module RBSH
       clause('single_quoted_string')  {|s| s}
       clause('curly_braced')          {|s| s}
       clause('bracketed')             {|s| s}
+      clause('parenthetical')         {|s| s}
+    end
+
+
+    production(:parenthetical) do
+      clause('PAREN_START empty_expression_list PAREN_END') {|_,list,_| AST::Parenthetical.new(list) }
     end
 
 
@@ -148,7 +171,7 @@ module RBSH
       clause('special_expression')  {|s| s}
     end
 
-
-    finalize#(use: 'parser.tbl')
+    finalize
+    # finalize#(use: 'parser.tbl')
   end
 end

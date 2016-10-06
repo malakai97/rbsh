@@ -15,6 +15,17 @@ module RBSH
     rule(/=/, :default)       { [:EQUALS, '='] }
     rule(/&&/, :default)      { [:AND, '&&']}
     rule(/\|\|/, :default)    { [:OR, '||']}
+    rule(/,/, :default)       { [:COMMA, ',']}
+    rule(/;/, :default)       { [:SEMI, ';']}
+    rule(/\(/, :default)      { push_state(:parenthesis); [:PAREN_START, '('] }
+
+    rule(/\)/, :parenthesis)  { pop_state; [:PAREN_END, ')'] }
+    rule(/`/, :parenthesis)   { push_state(:subshell); [:SUBSHELL_START, '`'] }
+    rule(/"/, :parenthesis)   { push_state(:double_quote); [:DOUBLE_QUOTE_START, '"'] }
+    rule(/'/, :parenthesis)   { push_state(:single_quote); [:SINGLE_QUOTE_START, "'"] }
+    rule(/\{/, :parenthesis)  { push_state(:curly_brace); [:CURLY_BRACE_START, "{"] }
+    rule(/\[/, :parenthesis)  { push_state(:bracket); [:BRACKET_START, "["] }
+    rule(/\(/, :parenthesis)  { push_state(:parenthesis); [:PAREN_START, '('] }
 
     rule(/\[/, :bracket)      { push_state(:bracket); [:BRACKET_START, "["] }
     rule(/\]/, :bracket)      { pop_state; [:BRACKET_END, "]" ]}
@@ -52,16 +63,17 @@ module RBSH
     rule(/"/, :subshell)      {|c| push_state(:double_quote); [:DOUBLE_QUOTE_START, c] }
     rule(/'/, :subshell)      {|c| push_state(:single_quote); [:SINGLE_QUOTE_START, c] }
 
-
-    rule(/[^\s=\\'"`\[{]+/, :default)       {|c| [:WORD, c] }
-    rule(/[^\s'"`\]{]+/,    :bracket)       {|c| [:WORD, c] }
-    rule(/[^\s'"`\[{}]+/,   :curly_brace)   {|c| [:WORD, c] }
-    rule(/[^\s\\]+/,        :single_quote)  {|c| [:WORD, c] }
-    rule(/[^\s\\"#]+/,      :double_quote)  {|c| [:WORD, c] }
-    rule(/[^\s'"`\[\]{}]+/, :interpolate)   {|c| [:WORD, c] }
-    rule(/[^\s\\'"`#]+/,    :subshell)      {|c| [:WORD, c] }
+    rule(/[^\s=\\'"`\[  { (  ,;]+/,   :default)       {|c| [:WORD, c] }
+    rule(/[^\s   '"`\[  { ()   ]+/,   :parenthesis)   {|c| [:WORD, c] }
+    rule(/[^\s   '"`\[\]{      ]+/,   :bracket)       {|c| [:WORD, c] }
+    rule(/[^\s   '"`\[  {}     ]+/,   :curly_brace)   {|c| [:WORD, c] }
+    rule(/[^\s \\'             ]+/,   :single_quote)  {|c| [:WORD, c] }
+    rule(/[^\s \\ "         #  ]+/,   :double_quote)  {|c| [:WORD, c] }
+    rule(/[^\s   '"`\[  {}     ]+/,   :interpolate)   {|c| [:WORD, c] }
+    rule(/[^\s \\'"`        #  ]+/,   :subshell)      {|c| [:WORD, c] }
 
     rule(/\s+/, :default)                   { nil }
+    rule(/\s+/, :parenthesis)               { nil }
     rule(/\s+/, :bracket)                   {|c| [:WHITESPACE, c] }
     rule(/\s+/, :curly_brace)               {|c| [:WHITESPACE, c] }
     rule(/\s+/, :single_quote)              {|c| [:WHITESPACE, c] }
