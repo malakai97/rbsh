@@ -26,3 +26,5 @@ z = `echo #{`echo bracket(})`}`
 cat                                 somefile.txt
 ssh "zip=#{{a: ["recruiter"]}}"
 go(1,2,3, 4)
+zip && zop
+ls; ls-tree
