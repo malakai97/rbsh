@@ -23,6 +23,7 @@ module RBSH
     end
   end
 
+  class ClauseList < Container; end
   class Pipeline < Container; end
   class PipelineElement < Container
     def to_ruby
@@ -69,6 +70,8 @@ module RBSH
       content
     end
   end
+  class And; end
+  class Or; end
   class Assignment
     attr_reader :lhs, :rhs
     def initialize(lhs, rhs)
@@ -81,6 +84,11 @@ module RBSH
   end
 
   class Visitor
+
+    def visit_ClauseList(node)
+      children = node.children.map{|child| child.accept(self) }
+      ClauseList.new(children)
+    end
 
     def visit_Pipeline(node)
       children = node.children.map{|child| child.accept(self) }
@@ -141,12 +149,14 @@ module RBSH
     end
 
     def visit_And(node)
-      Word.new(node.value)
+      And.new
     end
 
     def visit_Or(node)
-      Word.new(node.value)
+      Or.new
     end
+
+
 
     def visit_Assignment(node)
       Assignment.new(node.lhs.accept(self), node.rhs.accept(self))
