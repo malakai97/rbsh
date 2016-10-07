@@ -1,9 +1,8 @@
 require "rltk"
 
-require "rbsh/lexer"
-require "rbsh/ast"
-require "rbsh/parser"
-require "rbsh/visitor"
+require "rbsh/printable"
+require "rbsh/syntax"
+require "rbsh/semantic"
 
 
 module RBSH

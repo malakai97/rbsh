@@ -10,8 +10,8 @@ def main
       line_number += 1
       line = line.rstrip
       puts "\n######## #{line_number}: #{line} ########"
-      result =  RBSH::Lexer.new.lex(line)
-      ast = RBSH::Parser::parse(result)
+      result =  RBSH::Syntax::Lexer.new.lex(line)
+      ast = RBSH::Syntax::Parser::parse(result)
       puts ast.to_sexp
     end
   else
@@ -19,8 +19,8 @@ def main
     line = File.read("commands").split("\n")[line_number]
     line = line.rstrip
     puts "######## #{line_number}: #{line} ########"
-    lexed = RBSH::Lexer.new.lex(line)
-    ast = RBSH::Parser::parse(lexed)
+    lexed = RBSH::Syntax::Lexer.new.lex(line)
+    ast = RBSH::Syntax::Parser::parse(lexed)
     # pp ast
     # require 'pry'; binding.pry
     puts ast.to_sexp
