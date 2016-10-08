@@ -1,6 +1,12 @@
-require "rbsh/syntax/ast/node"
+require "rbsh/syntax/ast/pair"
 
-ns 'r_b_s_h.syntax.a_s_t' do
-  class And < Pair
+module RBSH
+  module Syntax
+    module AST
+
+      class And < Pair
+      end
+
+    end
   end
 end

@@ -26,7 +26,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "rltk"
-  spec.add_runtime_dependency "namespacing"
 
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "pry"
