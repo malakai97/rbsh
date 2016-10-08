@@ -8,26 +8,39 @@ module RBSH
       # :input is not special; the first clause is
       # automatically the input clause.
       production(:input) do
-        clause('pipeline_list')  {|e| AST::ClauseList.new(e) }
+        clause('binary_statement')  {|s| s }
       end
 
-      production(:pipeline_list) do
-        clause('pipeline') {|e| [e]}
-        clause('pipeline_list pipeline_separator pipeline') {|list,sep,e| list + sep + [e]}
+      production(:binary_statement) do
+        clause('and_statement') {|s| s}
+        clause('or_statement')  {|s| s}
+        clause('semi_statement') {|s| s}
       end
 
-      production(:pipeline_separator) do
-        clause('and')   {|s| [s]}
-        clause('or')    {|s| [s]}
-        clause('SEMI')  {|_| []}
+      production(:and_statement) do
+        clause('binary_statement AND binary_statement') {|s1,_,s2| AST::And.new(s1,s2) }
+        clause('pipeline AND binary_statement')         {|s1,_,s2| AST::And.new(s1,s2) }
+        clause('pipeline AND pipeline')                 {|s1,_,s2| AST::And.new(s1,s2) }
       end
+
+      production(:or_statement) do
+        clause('binary_statement OR binary_statement') {|s1,_,s2| AST::Or.new(s1,s2) }
+        clause('pipeline OR binary_statement')         {|s1,_,s2| AST::Or.new(s1,s2) }
+        clause('pipeline OR pipeline')                 {|s1,_,s2| AST::Or.new(s1,s2) }
+      end
+
+      production(:semi_statement) do
+        clause('binary_statement SEMI binary_statement')  {|s1,_,s2| AST::Then.new(s1,s2) }
+        clause('pipeline SEMI binary_statement')          {|s1,_,s2| AST::Then.new(s1,s2) }
+        clause('pipeline SEMI pipeline')                  {|s1,_,s2| AST::Then.new(s1,s2) }
+        clause('pipeline SEMI')                           {|s,_| AST::Then.new(s, AST::Pipeline.new([])) }
+        clause('pipeline')                                {|s| AST::Then.new(s, AST::Pipeline.new([])) }
+      end
+
 
       production(:escaped, 'ESCAPED')       {|e| AST::Escaped.new(e) }
       production(:whitespace, 'WHITESPACE') {|s| AST::Whitespace.new(s) }
       production(:equals, 'EQUALS')         {|_| AST::Equals.new }
-      production(:and, 'AND')               {|_| AST::And.new }
-      production(:or, 'OR')                 {|_| AST::Or.new }
-
 
       production(:pipeline) do
         clause('pipeline_element_list') {|list| AST::Pipeline.new(list)}
@@ -50,8 +63,8 @@ module RBSH
       end
 
       production(:assignment) do
-        clause('word equals special_expression') {|lhs,_,rhs| AST::Assignment.new(lhs, rhs) }
-        clause('word equals word')               {|lhs,_,rhs| AST::Assignment.new(lhs, rhs) }
+        clause('word EQUALS special_expression') {|lhs,_,rhs| AST::Assignment.new(lhs, rhs) }
+        clause('word EQUALS word')               {|lhs,_,rhs| AST::Assignment.new(lhs, rhs) }
       end
 
       production(:word) do

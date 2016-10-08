@@ -28,3 +28,6 @@ ssh "zip=#{{a: ["recruiter"]}}"
 go(1,2,3, 4)
 zip && zop
 ls; ls-tree
+zip; zop; zoopity
+a && b && c && d
+(a && b) || (c && d)
