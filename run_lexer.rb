@@ -17,7 +17,7 @@ def main
     line_number = ARGV[0].to_i - 1
     line = File.read("commands").split("\n")[line_number]
     line = line.rstrip
-    puts "######## #{line_number}: #{line} ########"
+    puts "######## #{line_number+1}: #{line} ########"
     result =  RBSH::Syntax::Lexer.new.lex(line)
     puts result
   end
