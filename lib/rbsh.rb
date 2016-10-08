@@ -1,9 +1,14 @@
 require "rltk"
+require "namespacing"
 
 require "rbsh/printable"
 require "rbsh/syntax"
 require "rbsh/semantic"
 
+
+class Object
+  include Namespacing
+end
 
 module RBSH
   private

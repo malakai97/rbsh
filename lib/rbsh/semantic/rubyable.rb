@@ -3,8 +3,13 @@ module RBSH
 
     class Rubyable
       include RBSH::Printable
+
       def initialize(content)
         @content = content
+      end
+
+      def evaluate(binding)
+        eval(to_ruby, binding)
       end
 
       private
