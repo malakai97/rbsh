@@ -12,92 +12,112 @@ module RBSH
 
 
     class AnnotationVisitor
-
-      def visit_ClauseList(node)
-        children = node.children.map{|child| child.accept(self) }
-        Semantic::ClauseList.new(children)
+      def visit_And(node)
+        AST::And.new(node.lhs.accept(self), node.rhs.accept(self))
       end
 
-      def visit_Pipeline(node)
-        children = node.children.map{|child| child.accept(self) }
-        Semantic::Pipeline.new(children)
-      end
-
-      def visit_PipelineElement(node)
-        children = node.children.map{|child| child.accept(self) }
-        Semantic::PipelineElement.new(children)
-      end
-
-      def visit_Subshell(node)
-        Semantic::Subshell.new(children_to_content(node.children))
-      end
-
-      def visit_Interpolation(node)
-        Semantic::Interpolation.new(children_to_content(node.children))
-      end
-
-      def visit_SingleQuotedString(node)
-        Semantic::SingleQuotedString.new(children_to_content(node.children))
-      end
-
-      def visit_DoubleQuotedString(node)
-        Semantic::DoubleQuotedString.new(children_to_content(node.children))
-      end
-
-      def visit_CurlyBraced(node)
-        Semantic::CurlyBraced.new(children_to_content(node.children))
+      def visit_Assignment(node)
+        AST::Assignment.new(node.lhs.accept(self), node.rhs.accept(self))
       end
 
       def visit_Bracketed(node)
-        Semantic::Bracketed.new(children_to_content(node.children))
+        if node.parent.is_a?(AST::Assignment) || node.parent.is_a?(AST::PipelineElement)
+          AST::Bracketed.new [AST::Word.new(children_to_word(node.children))]
+        else
+          AST::Word.new "[#{children_to_word(node.children)}]"
+        end
+      end
+
+      def visit_CurlyBraced(node)
+        if node.parent.is_a?(AST::Assignment) || node.parent.is_a?(AST::PipelineElement)
+          AST::CurlyBraced.new [AST::Word.new(children_to_word(node.children))]
+        else
+          AST::Word.new "{#{children_to_word(node.children)}}"
+        end
+      end
+
+      def visit_DoubleQuotedString(node)
+        if node.parent.is_a?(AST::Assignment) || node.parent.is_a?(AST::PipelineElement)
+          AST::DoubleQuotedString.new [AST::Word.new(children_to_word(node.children))]
+        else
+          AST::Word.new "\"#{children_to_word(node.children)}\""
+        end
+      end
+
+      def visit_Equals(node)
+        AST::Word.new(node.value)
+      end
+
+      def visit_Escaped(node)
+        AST::Word.new(node.value)
+      end
+
+      def visit_Interpolation(node)
+        if node.parent.is_a?(AST::Assignment) || node.parent.is_a?(AST::PipelineElement)
+          AST::Interpolation.new [AST::Word.new(children_to_word(node.children))]
+        else
+          AST::Word.new '#{' + children_to_word(node.children) + '}'
+        end
+      end
+
+      def visit_Or(node)
+        AST::Or.new(node.lhs.accept(self), node.rhs.accept(self))
       end
 
       def visit_Parenthetical(node)
         content = node.children
-          .map{|child| child.accept(self) }
-          .map{|child| child.to_ruby }
+          .map{|c| c.accept(self) }
+          .map{|c| c.value }
           .join(" ")
-        Semantic::Word.new("(#{content})")
+        AST::Word.new("(#{content})")
       end
 
-      def visit_Word(node)
-        Semantic::Word.new(node.value)
+      def visit_Pipeline(node)
+        children = node.children.map{|child| child.accept(self) }
+        AST::Pipeline.new(children)
       end
 
-      def visit_Escaped(node)
-        Semantic::Word.new(node.value)
+      def visit_PipelineElement(node)
+        children = node.children.map{|child| child.accept(self) }
+        AST::PipelineElement.new(children)
+      end
+
+      def visit_SingleQuotedString(node)
+        if node.parent.is_a?(AST::Assignment) || node.parent.is_a?(AST::PipelineElement)
+          AST::SingleQuotedString.new [AST::Word.new(children_to_word(node.children))]
+        else
+          AST::Word.new "'#{children_to_word(node.children)}'"
+        end
+      end
+
+      def visit_Subshell(node)
+        if node.parent.is_a?(AST::Assignment) || node.parent.is_a?(AST::PipelineElement)
+          AST::Subshell.new [AST::Word.new(children_to_word(node.children))]
+        else
+          AST::Word.new "`#{children_to_word(node.children)}`"
+        end
+      end
+
+      def visit_Then(node)
+        AST::Then.new(node.lhs.accept(self), node.rhs.accept(self))
       end
 
       def visit_Whitespace(node)
-        Semantic::Word.new(node.value)
+        AST::Word.new(node.value)
       end
 
-      def visit_Equals(node)
-        Semantic::Word.new(node.value)
+      def visit_Word(node)
+        AST::Word.new(node.value)
       end
-
-      def visit_And(node)
-        Semantic::And.new
-      end
-
-      def visit_Or(node)
-        Semantic::Or.new
-      end
-
-      def visit_Assignment(node)
-        Semantic::Assignment.new(node.lhs.accept(self), node.rhs.accept(self))
-      end
-
 
       private
 
-      def children_to_content(children)
+      def children_to_word(children)
         children
-          .map{|child| child.accept(self) }
-          .map{|child| child.to_ruby }
+          .map{|c| c.accept(self) }
+          .map{|c| c.value }
           .join
       end
-
 
     end
 
