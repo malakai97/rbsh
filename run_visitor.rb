@@ -10,9 +10,9 @@ def main
       line_number += 1
       line = line.rstrip
       puts "\n######## #{line_number}: #{line} ########"
-      result =  RBSH::Syntax::Lexer.new.lex(line)
-      ast = RBSH::Syntax::Parser::parse(result)
-      visitor = RBSH::Syntax::AnnotationVisitor.new
+      result =  RBSH::Lexer.new.lex(line)
+      ast = RBSH::Parser::parse(result)
+      visitor = RBSH::AnnotationVisitor.new
       clauses = ast.accept(visitor)
       puts clauses.to_sexp
     end
@@ -21,9 +21,9 @@ def main
     line = File.read("commands").split("\n")[line_number]
     line = line.rstrip
     puts "######## #{line_number+1}: #{line} ########"
-    lexed = RBSH::Syntax::Lexer.new.lex(line)
-    ast = RBSH::Syntax::Parser::parse(lexed)
-    visitor = RBSH::Syntax::AnnotationVisitor.new
+    lexed = RBSH::Lexer.new.lex(line)
+    ast = RBSH::Parser::parse(lexed)
+    visitor = RBSH::AnnotationVisitor.new
     clauses = ast.accept(visitor)
     puts clauses.to_sexp
   end

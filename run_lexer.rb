@@ -10,7 +10,7 @@ def main
       line_number += 1
       line = line.rstrip
       puts "######## #{line_number}: #{line} ########"
-      result =  RBSH::Syntax::Lexer.new.lex(line)
+      result =  RBSH::Lexer.new.lex(line)
       puts result
     end
   else
@@ -18,7 +18,7 @@ def main
     line = File.read("commands").split("\n")[line_number]
     line = line.rstrip
     puts "######## #{line_number+1}: #{line} ########"
-    result =  RBSH::Syntax::Lexer.new.lex(line)
+    result =  RBSH::Lexer.new.lex(line)
     puts result
   end
 end

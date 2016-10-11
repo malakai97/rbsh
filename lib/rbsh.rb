@@ -1,8 +1,11 @@
 require "rltk"
 
 require "rbsh/printable"
-require "rbsh/syntax"
-require "rbsh/semantic"
+require "rbsh/ast"
+require "rbsh/lexer"
+require "rbsh/parser"
+require "rbsh/annotation_visitor"
+
 
 
 module RBSH
@@ -23,3 +26,5 @@ module RBSH
     return nil
   end
 end
+
+
